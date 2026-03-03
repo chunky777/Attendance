@@ -18,6 +18,10 @@ public class Employee {
         return id;
     }
 
+    public String getEmployeeCode() {
+    return employeeCode;
+}
+
     public String getName() {
         return name;
     }
