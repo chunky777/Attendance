@@ -1,8 +1,10 @@
 package com.example.demo;
 
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.Optional;
+import org.springframework.security.core.Authentication;
 
 
 @RestController
@@ -17,39 +19,53 @@ public class AttendanceController {
         this.employeeRepository = employeeRepository;
     }
 
-    @GetMapping("/clockin")
-    public String clockIn(@RequestParam String employeeCode){
+@PostMapping("/clockin")
+public String clockIn() {
 
-        Optional<Employee> optionalEmployee = employeeRepository.findByEmployeeCode(employeeCode);
+    Authentication auth =
+        SecurityContextHolder.getContext().getAuthentication();
 
-        if(optionalEmployee.isEmpty()) {
-            return "社員コードが見つかりません";
-        }
-        
-        Employee employee = optionalEmployee.get();
-        Attendance attendance = new Attendance();
-        attendance.setEmployee(employee);
-        attendance.setClockIn(LocalDateTime.now());
+    String employeeCode = auth.getName();
 
-        repository.save(attendance);
+    Employee employee = employeeRepository
+            .findByEmployeeCode(employeeCode)
+            .orElseThrow();
 
-        return "出勤完了";
-    }
+    Attendance attendance = new Attendance();
+    attendance.setEmployee(employee);
+    attendance.setClockIn(LocalDateTime.now());
+
+    repository.save(attendance);
+
+    return "出勤しました";
+}
     
-    @GetMapping("/clockout")
-    public String clockOut(@RequestParam String name){
-        Optional<Attendance> optional = repository.findTopByEmployeeNameAndClockOutIsNullOrderByClockInDesc(name);
+@PostMapping("/clockout")
+public String clockOut(Authentication authentication){
 
-        if(optional.isEmpty()) {
-            return "出勤データがありません";
-        }
+    String employeeCode = authentication.getName();
 
-        Attendance attendance = optional.get();
-        attendance.setClockOut(LocalDateTime.now());
+    Employee employee = employeeRepository
+            .findByEmployeeCode(employeeCode)
+            .orElseThrow();
 
+    Optional<Attendance> optional =
+        repository.findTopByEmployeeAndClockOutIsNullOrderByClockInDesc(employee);
 
-        repository.save(attendance);
-
-        return "退勤完了";
+    if(optional.isEmpty()) {
+        return "出勤データがありません";
     }
+
+    Attendance attendance = optional.get();
+
+    if(attendance.getClockOut() != null){
+        return "すでに退勤済みです";
+    }
+
+    attendance.setClockOut(LocalDateTime.now());
+
+    repository.save(attendance);
+
+    return "退勤完了";
+}
 }
