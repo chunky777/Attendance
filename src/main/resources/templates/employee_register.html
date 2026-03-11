@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>社員登録</title>
+</head>
+<body>
+
+<h2>社員登録</h2>
+
+<form th:action="@{/employee/register}" th:object="${employee}" method="post">
+
+    <label>社員コード:</label>
+    <input type="text" th:field="*{employeeCode}" required><br>
+
+    <label>名前:</label>
+    <input type="text" th:field="*{name}" required><br>
+
+    <label>Email:</label>
+    <input type="email" th:field="*{email}" required><br>
+
+    <label>Password:</label>
+    <input type="password" th:field="*{password}" required><br>
+
+    <button type="submit">登録</button>
+</form>
+
+<div th:if="${param.success}">
+    <p>登録が完了しました！</p>
+</div>
+
+</body>
+</html>
